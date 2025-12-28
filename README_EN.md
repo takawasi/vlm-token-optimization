@@ -1,207 +1,176 @@
-# VLM Token Optimization Toolkit
-**Screen Recognition System that Reduced GPT-4V Image Tokens by 90%**
+# VLM Grid Focus Toolkit
+**Improve VLM Image Recognition Accuracy with Dynamic Grid Focus**
 
-> From $500/month to $50 with 24-grid division + differential detection
-> Practical token optimization for VLM (Vision Language Model) based screen automation
+> Two-stage recognition: Overview first, then detailed focus
+> Same approach as human visual cognition to enhance VLM accuracy
 
 [日本語README](./README.md)
 
 ---
 
-## 🎯 What This Toolkit Solves
+## What This Toolkit Solves
 
-- **Dramatic reduction of image token costs**: From full-screen transmission to focused regions only
-- **Faster VLM response**: Minimized image size leads to shorter processing time
-- **Practical screen automation**: Cost reduction enables real-world VLM-based automation
-
----
-
-## 📊 Token Cost Comparison
-
-| Method | Image Size | Tokens (GPT-4V) | Monthly Cost (100×/day) |
-|--------|-----------|-----------------|------------------------|
-| Full Screen (1920×1080) | 2.07MB | ~1,700 tokens | $500+ |
-| 24-grid (1 tile) | ~90KB | ~170 tokens | $50 |
-| After diff detection (avg 3 tiles) | ~270KB | ~510 tokens | $150 |
-
-**Reduction Rate**: Approx. 70-90% (varies by situation)
+- **VLM Recognition Accuracy**: See details invisible in full-screen images via grid focus
+- **CLI/Automation Ready**: Specify tile numbers programmatically
+- **Differential Detection**: Automatically focus on changed areas
 
 ---
 
-## 🚀 Components
+## The Problem: Full-Screen Images Miss Details
+
+When you show VLMs (GPT-4V, Claude, etc.) a 1920x1080 full-screen:
+- Small button text is unreadable
+- Fine UI elements go unrecognized
+- VLM knows "where things are" but not "what they say"
+
+**Humans work the same way.** You can't read small text by glancing at the whole screen. You need to focus on specific areas.
+
+### Solution: Two-Stage Recognition
+
+1. **Overview**: One full-screen image to understand layout
+2. **Grid Selection**: Choose tile numbers for areas needing detail
+3. **Focused Recognition**: 2-3 focused tiles for detailed understanding
+
+```
+Full-screen only → Blurry recognition
+Full-screen + 2-3 focused tiles → Detailed recognition
+```
+
+**Note**: This increases the number of images sent (more cost), but significantly improves recognition accuracy.
+
+---
+
+## 24-Grid Division
+
+Screen divided into 6x4 = 24 tiles. Specify regions by tile number.
+
+```
++------+------+------+------+------+------+
+|  1   |  2   |  3   |  4   |  5   |  6   |
++------+------+------+------+------+------+
+|  7   |  8   |  9   | 10   | 11   | 12   |
++------+------+------+------+------+------+
+| 13   | 14   | 15   | 16   | 17   | 18   |
++------+------+------+------+------+------+
+| 19   | 20   | 21   | 22   | 23   | 24   |
++------+------+------+------+------+------+
+```
+
+1 tile = 320x270px (for 1920x1080 screen)
+
+---
+
+## Components
 
 ### 1. Screen Capture 24Grid (`screen_capture_24grid.py`)
-**Purpose**: Divide screen into 24 tiles and send only necessary ones
+**Purpose**: Divide screen into 24 tiles, capture specified ones
 
 **Features**:
-- Divide screen into 6×4 = 24 tiles
-- Integrate with Claude Desktop screenshot function
-- Specify tiles by number (top-left=1, bottom-right=24)
-- Single tile or multiple tiles supported
+- Tile number specification (top-left=1, bottom-right=24)
+- Single or multiple tile selection
+- Optional overview image output
 
 **Usage**:
-```python
-# Capture only tiles 7, 8, 13, 14 (center 4 tiles)
-python screen_capture_24grid.py --tiles 7,8,13,14
+```bash
+# Overview + tiles 8,9 (upper center) for detail
+python screen_capture_24grid.py --overview --tiles 8,9
 ```
 
 ### 2. Screen Diff Detector (`screen_diff_detector.py`)
-**Purpose**: Detect changes from previous screenshot and send only changed tiles
+**Purpose**: Detect changes from previous screenshot, auto-select changed tiles
 
 **Features**:
-- Detect diff from previous screenshot in 24-tile units
+- Detect differences in 24-tile units
 - Extract only changed tiles
-- Adjustable diff threshold
-- Diff visualization (red border display)
+- Auto-focus on "what changed"
 
 **Usage**:
-```python
-# Detect diff from previous and send only changed regions
+```bash
+# Detect changes, focus on changed areas
 python screen_diff_detector.py --threshold 0.05
 ```
 
 ### 3. OCR Text Locator (`ocr_text_locator.py`)
-**Purpose**: Get text coordinates and identify corresponding tiles
+**Purpose**: Get text coordinates and identify which tile contains it
 
 **Features**:
-- Detect text with OCR
-- Get text coordinates on screen
-- Calculate corresponding tiles from coordinates
-- Enable "send tiles around text" to VLM
+- OCR text detection
+- Get screen coordinates of text
+- Auto-identify "which tile has the Submit button"
 
 **Usage**:
-```python
-# Detect "Submit" button coordinates and identify tile
+```bash
+# Find which tile contains "Submit"
 python ocr_text_locator.py --text "Submit"
 ```
 
 ---
 
-## 🧠 Design Philosophy: Why 24 Divisions?
+## Design Philosophy: Human Visual Cognition
 
-### Cognitive Science Foundation
-- **Human visual cognition**: Limited range of simultaneous recognition
-- **Eye-tracking research**: Focus area is only 10-20% of whole screen during web/app usage
-- **F-pattern**: Eye movement pattern from top-left → right → bottom-left
+### Why 24 Tiles?
 
-### Technical Optimization
-- **6×4 grid**: 1 tile = 320×270px (for 1920×1080)
-- **Claude Desktop integration**: Compatible with existing screenshot function
-- **Flexibility**: From single tile to all 24 tiles
+- **Human visual cognition**: Limited recognition area at once
+- **Eye-tracking research**: Focus area is ~10-20% of screen
+- **F-pattern**: Left-top → right → left-bottom scanning
 
-### Token Efficiency
-- **Full screen**: ~1,700 tokens
-- **1 tile**: ~170 tokens (1/10)
-- **Practical average**: 3-5 tiles (~500-850 tokens, 70% reduction)
+VLMs work the same. Specifying "look here" gives better accuracy than showing everything.
 
----
+### CLI/Automation Design
 
-## 💡 How Differential Detection Works
-
-### 1. Hash Comparison per Tile
-Hash pixel data of each tile and detect differences from previous at high speed.
-
-### 2. Change Threshold Adjustment
-```python
-# Send only tiles with 5%+ change
---threshold 0.05
-```
-
-### 3. Change Pattern Optimization
-- **Static UI**: No need to send unchanging buttons/menus
-- **Dynamic content**: Send only text input fields, scroll areas, etc.
-- **Animations**: Ignore micro-changes (adjust with threshold)
+- **Number-based**: "Show tiles 8,9" in one command
+- **Diff detection**: "Show only changed parts" automatically
+- **Pipeline integration**: Combine with other CLI tools
 
 ---
 
-## 📖 VLA Project Background
+## Practical Examples
 
-This toolkit was born from the **VLA (Vision-Language-Action) Project**.
-
-### What is VLA?
-A system that automates PC operations while showing the screen to Claude (Vision Language Model).
-Unlike traditional RPA (image recognition based), VLM "understands" screen content and operates.
-
-### Challenge: Token Cost Explosion
-- Sending Full HD screen (1920×1080) every time = 1,700 tokens per operation
-- 100 operations/day = 170k tokens/day (over $500/month)
-- **Cost reduction is absolute requirement** for practical use
-
-### Solution: 24-grid + Differential Detection
-1. **Phase 1**: Divide screen into 24 tiles, send only necessary ones (90% reduction)
-2. **Phase 2**: Send only changed regions with diff detection (further reduction)
-3. **Phase 3**: Send only around specific text with OCR (pinpoint accuracy)
-
-### Implementation Results
-- Token reduction rate: **70-90%**
-- Monthly cost: **$500 → $50-150**
-- VLM response speed: **30-50% improvement** (reduced image processing time)
-
-### Integration with Mass Production System
-This toolkit was developed as part of the SPQR (Semi-autonomous Prototyping and Quality Refinement) system.
-With **quality-first mass production methodology**, we cycled implementation → testing → improvement at high speed, reaching practical level in 3 weeks.
-
----
-
-## 🛠️ Usage Examples (Practice)
-
-### Case 1: Web Form Auto-Fill
+### Case 1: Form Input Detail Recognition
 ```bash
-# 1. Check entire screen with 24-grid
-python screen_capture_24grid.py --tiles all
+# 1. Overview
+python screen_capture_24grid.py --overview
 
-# 2. Claude: "Form is at screen center (tiles 13, 14)"
+# 2. VLM: "Form is in center (tiles 13, 14)"
 
-# 3. Send only relevant tiles
+# 3. Detailed focus
 python screen_capture_24grid.py --tiles 13,14
 
-# 4. Claude: "Please input in name field" → Execute input
+# 4. VLM: "Name field placeholder is 'John Doe'"
+#    (Detail invisible in full-screen now visible)
+```
 
-# 5. Check only changed regions with diff detection
+### Case 2: Auto-Focus on Changes
+```bash
+# 1. Detect diff
 python screen_diff_detector.py --threshold 0.05
 
-# 6. Claude: "Input complete. Will click submit button"
+# 2. Output: "Tiles 14, 15 changed"
+
+# 3. Focus on changes only
+python screen_capture_24grid.py --tiles 14,15
 ```
 
-**Token reduction**: 1,700 tokens → 340 tokens (80% reduction)
-
-### Case 2: Dynamic Content Monitoring
+### Case 3: Text-Specific Detail Check
 ```bash
-# 1. Get full screen initially
-python screen_capture_24grid.py --tiles all
-
-# 2. Only diff afterwards
-while true; do
-    python screen_diff_detector.py --threshold 0.05
-    sleep 5
-done
-```
-
-**Effect**: Zero token consumption when no change
-
-### Case 3: Operations Around Specific Text
-```bash
-# 1. Detect "Submit" button coordinates
+# 1. Locate "Submit" button
 python ocr_text_locator.py --text "Submit"
 
-# Output: Exists in tile 18
+# Output: Found in tile 18
 
-# 2. Send only relevant tile
+# 2. Detail check
 python screen_capture_24grid.py --tiles 18
 
-# 3. Claude: "Will click submit button"
+# 3. VLM: "Submit button is enabled (not grayed out)"
 ```
-
-**Token reduction**: 1,700 tokens → 170 tokens (90% reduction)
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Requirements
 - Python 3.8+
-- macOS (for Claude Desktop integration)
-- Linux/Windows (standalone usage available)
+- macOS / Linux / Windows
 
 ### Dependencies
 ```bash
@@ -222,54 +191,21 @@ sudo apt-get install tesseract-ocr
 
 ---
 
-## 🎓 Technical Background
-
-### Why Screen Operations with VLM?
-Traditional RPA (Robotic Process Automation) was fragile with image recognition:
-- Breaks when UI changes slightly
-- Requires element coordinate specification
-- Weak against dynamic content
-
-**VLM (Vision Language Model) Advantages**:
-- "Understands" screen content
-- Adapts to flexible UI changes
-- Natural language instructions possible
-
-### Importance of Token Optimization
-VLM image tokens are high-cost:
-- GPT-4V: 170-1,700 tokens per image (size dependent)
-- Claude 3: Similar challenge
-
-**24-grid Effect**:
-- 10× efficiency by sending only necessary parts
-- Improved response speed (reduced image processing time)
-
----
-
-## 📝 License
+## License
 
 MIT License
 
 ---
 
-## 🤝 Contribution
+## Contributing
 
-Issues and Pull Requests are welcome.
-
----
-
-## 📚 References
-
-- [Claude Desktop Documentation](https://docs.anthropic.com/)
-- [GPT-4V Token Pricing](https://openai.com/pricing)
-- [VLM Survey Papers](https://arxiv.org/abs/2303.xxxxx)
+Issues and Pull Requests welcome.
 
 ---
 
-**Developer**: TAKAWASI / SPQR System
-**Project**: VLA (Vision-Language-Action)
-**Methodology**: Structural Dominance Doctrine Applied
+**Developer**: TAKAWASI
+**Site**: https://takawasi-social.com/tech/vlm-token-optimization.html
 
 ---
 
-*"The core is substance, the surface dedicates to understanding"*
+*"Overview first, then focus on details. Just like human eyes."*
