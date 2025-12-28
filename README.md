@@ -204,7 +204,7 @@ Issue、Pull Requestを歓迎します。
 ---
 
 **開発**: TAKAWASI
-**サイト**: https://takawasi-social.com/tech/vlm-token-optimization.html
+**サイト**: https://takawasi-social.com/tech/vlm-grid-focus.html
 
 ---
 

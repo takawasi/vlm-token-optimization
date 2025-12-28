@@ -204,7 +204,7 @@ Issues and Pull Requests welcome.
 ---
 
 **Developer**: TAKAWASI
-**Site**: https://takawasi-social.com/tech/vlm-token-optimization.html
+**Site**: https://takawasi-social.com/tech/vlm-grid-focus.html
 
 ---
 
